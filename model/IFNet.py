@@ -75,12 +75,12 @@ class IFNet(nn.Module):
         for i in range(3):
             if i > 0:
             # if flow != None:
-                print("Scale A " + str(scale[i]))
+                # print("Scale A " + str(scale[i]))
                 flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i], flow_is_none="lol it's not none")
                 flow = flow + flow_d
                 mask = mask + mask_d
             else:
-                print("Scale B " + str(scale[i]))
+                # print("Scale B " + str(scale[i]))
                 flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i], flow_is_none=None)
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)

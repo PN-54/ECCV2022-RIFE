@@ -24,14 +24,14 @@ def warp(tenInput, tenFlow):
     global shape_0
     k = (str(tenFlow.device), str(tenFlow.size()))
     # traceback.print_stack()
-    print("A")
-    print(tenFlow.shape[3])
-    print("B")
-    print(tenFlow.shape[2])
-    print("C")
-    print(tenFlow.shape[1])
-    print("D")
-    print(tenFlow.shape[0])
+    # print("A")
+    # print(tenFlow.shape[3])
+    # print("B")
+    # print(tenFlow.shape[2])
+    # print("C")
+    # print(tenFlow.shape[1])
+    # print("D")
+    # print(tenFlow.shape[0])
     if k not in backwarp_tenGrid:
         # print("TAKEN")
         # tenHorizontal = torch.linspace(-1.0, 1.0, 448, device=device).view(

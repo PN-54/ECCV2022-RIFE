@@ -34,12 +34,21 @@ class IFBlock(nn.Module):
             conv(c, c),
             conv(c, c),
         )
+        """
+        Convolution cannot be ignored but converter does not support it.
+        Ignore but mimic its cost with "similar???" Conv2d?
+        No idea if the converer will actually add its cost to timleoop config...
+        """
         self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
+        self.bs_conv = nn.Conv2d(c, 5, 4, 2, 1)
 
-    def forward(self, x, flow, scale):
+        # self.lastconv = nn.ConvTranspose2d(in_channels=c, out_channels=5, kernel_size=4, stride=2, padding=1)
+        # self.lastconv = nn.Conv2d(c, 5, 4, 2, 1)
+
+    def forward(self, x, flow, scale, flow_is_none):
         if scale != 1:
             x = F.interpolate(x, scale_factor = 1. / scale, mode="bilinear", align_corners=False)
-        if flow != None:
+        if flow_is_none != None:
             flow = F.interpolate(flow, scale_factor = 1. / scale, mode="bilinear", align_corners=False) * 1. / scale
             x = torch.cat((x, flow), 1)
         x = self.conv0(x)
@@ -48,8 +57,13 @@ class IFBlock(nn.Module):
         tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False)
         flow = tmp[:, :4] * scale * 2
         mask = tmp[:, 4:5]
+
+        # Try to make the converter add the cost of the bs convolution?
+        bs = self.bs_conv(x)
+        bs = F.interpolate(bs, scale_factor = scale * 2, mode="bilinear", align_corners=False)
+
         return flow, mask
-    
+
 class IFNet_m(nn.Module):
     def __init__(self):
         super(IFNet_m, self).__init__()
@@ -70,23 +84,26 @@ class IFNet_m(nn.Module):
         mask_list = []
         warped_img0 = img0
         warped_img1 = img1
-        flow = None 
+        flow = None
         loss_distill = 0
         stu = [self.block0, self.block1, self.block2]
         for i in range(3):
-            if flow != None:
-                flow_d, mask_d = stu[i](torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+            # if flow != None:
+            if i > 0:
+                flow_d, mask_d = stu[i](torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask), 1), flow, scale=scale[i], flow_is_none="lol it's not none")
                 flow = flow + flow_d
                 mask = mask + mask_d
             else:
-                flow, mask = stu[i](torch.cat((img0, img1, timestep), 1), None, scale=scale[i])
-            mask_list.append(torch.sigmoid(mask))
+                flow, mask = stu[i](torch.cat((img0, img1, timestep), 1), None, scale=scale[i], flow_is_none=None)
+            # mask_list.append(torch.sigmoid(mask))
+            mask_list.append()
             flow_list.append(flow)
             warped_img0 = warp(img0, flow[:, :2])
             warped_img1 = warp(img1, flow[:, 2:4])
             merged_student = (warped_img0, warped_img1)
             merged.append(merged_student)
-        if gt.shape[1] == 3:
+        # if gt.shape[1] == 3:
+        if False: # gt is none during inference
             flow_d, mask_d = self.block_tea(torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_teacher = flow + flow_d
             warped_img0_teacher = warp(img0, flow_teacher[:, :2])
@@ -98,7 +115,8 @@ class IFNet_m(nn.Module):
             merged_teacher = None
         for i in range(3):
             merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
-            if gt.shape[1] == 3:
+            # if gt.shape[1] == 3:
+            if False:
                 loss_mask = ((merged[i] - gt).abs().mean(1, True) > (merged_teacher - gt).abs().mean(1, True) + 0.01).float().detach()
                 loss_distill += (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5 * loss_mask).mean()
         if returnflow:
