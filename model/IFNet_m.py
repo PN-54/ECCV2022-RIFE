@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from model.warplayer import warp
 from model.refine import *
-import approximations
+import fruc_utils.approximations as approx
 
 def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
     return nn.Sequential(
@@ -35,16 +35,7 @@ class IFBlock(nn.Module):
             conv(c, c),
             conv(c, c),
         )
-        """
-        Convolution cannot be ignored but converter does not support it.
-        Ignore but mimic its cost with "similar???" Conv2d?
-        No idea if the converer will actually add its cost to timleoop config...
-        """
         self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
-        self.bs_conv = nn.Conv2d(c, 5, 4, 2, 1)
-
-        # self.lastconv = nn.ConvTranspose2d(in_channels=c, out_channels=5, kernel_size=4, stride=2, padding=1)
-        # self.lastconv = nn.Conv2d(c, 5, 4, 2, 1)
 
     def forward(self, x, flow, scale, flow_is_none):
         if scale != 1:
@@ -58,10 +49,6 @@ class IFBlock(nn.Module):
         tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False)
         flow = tmp[:, :4] * scale * 2
         mask = tmp[:, 4:5]
-
-        # Try to make the converter add the cost of the bs convolution?
-        bs = self.bs_conv(x)
-        bs = F.interpolate(bs, scale_factor = scale * 2, mode="bilinear", align_corners=False)
 
         return flow, mask
 
@@ -97,7 +84,7 @@ class IFNet_m(nn.Module):
             else:
                 flow, mask = stu[i](torch.cat((img0, img1, timestep), 1), None, scale=scale[i], flow_is_none=None)
             # mask_list.append(torch.sigmoid(mask))
-            mask_list.append(approximations.tensor_sigmoid(mask))
+            mask_list.append(approx.tensor_sigmoid(mask))
             flow_list.append(flow)
             warped_img0 = warp(img0, flow[:, :2], self.contextnet.shape)
             warped_img1 = warp(img1, flow[:, 2:4], self.contextnet.shape)
