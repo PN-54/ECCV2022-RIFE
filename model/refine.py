@@ -5,7 +5,6 @@ import torch.optim as optim
 import itertools
 from model.warplayer import warp
 import torch.nn.functional as F
-import fruc_utils.approximations as approx
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -90,5 +89,4 @@ class Unet(nn.Module):
         x = self.up2(torch.cat((x, s1), 1))
         x = self.up3(torch.cat((x, s0), 1))
         x = self.conv(x)
-        # return torch.sigmoid(x)
-        return approx.sigmoid(x)
+        return torch.sigmoid(x)
