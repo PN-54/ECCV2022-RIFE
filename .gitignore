@@ -12,3 +12,4 @@ test/
 *.npz
 
 *.zip
+/RIFE_m_train_log/
