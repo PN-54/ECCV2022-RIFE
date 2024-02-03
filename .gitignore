@@ -13,3 +13,5 @@ test/
 
 *.zip
 /RIFE_m_train_log/
+/RIFE_milli_train_log/
+/RIFE_micro_train_log/
