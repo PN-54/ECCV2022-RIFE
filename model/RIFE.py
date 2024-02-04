@@ -38,7 +38,7 @@ class Model:
     def device(self):
         self.flownet.to(device)
 
-    def load_model(self, path, rank=0):
+    def load_model(self, path, device, rank=0):
         def convert(param):
             return {
             k.replace("module.", ""): v
@@ -47,7 +47,7 @@ class Model:
             }
 
         if rank <= 0:
-            self.flownet.load_state_dict(convert(torch.load('{}/flownet.pkl'.format(path))))
+            self.flownet.load_state_dict(convert(torch.load('{}/flownet.pkl'.format(path), map_location=torch.device(device))))
 
     def save_model(self, path, rank=0):
         if rank == 0:
