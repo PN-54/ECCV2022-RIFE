@@ -43,12 +43,12 @@ class Contextnet(nn.Module):
         self.shape = None
 
     def forward(self, x, flow):
-        shape = self.shape.detach().clone()
+        # shape = self.shape.detach().clone()
         x = self.conv1(x)
         # shape[3] = shape[3] / 2
         # shape[2] = shape[2] / 2
         # flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
-        f1 = warp(x, flow, shape)
+        f1 = warp(x, flow)
         # x = self.conv2(x)
         # shape[3] = shape[3] / 2
         # shape[2] = shape[2] / 2
