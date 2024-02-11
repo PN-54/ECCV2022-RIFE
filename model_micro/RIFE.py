@@ -51,7 +51,7 @@ class Model:
         
     def save_model(self, path, rank=0):
         if rank <= 0:
-            torch.save(self.flownet.state_dict(),'{}/flownet.pkl'.format(path))
+            torch.save(self.flownet.state_dict(), path)
 
     def inference(self, img0, img1, scale=1, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
         for i in range(3):
@@ -75,21 +75,22 @@ class Model:
             self.eval()
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1]) # pass timestep if RIFEm
         loss_l1 = (self.lap(merged[0], gt)).mean()
-        loss_tea = (self.lap(merged_teacher, gt)).mean()
+        # loss_tea = (self.lap(merged_teacher, gt)).mean()
         if training:
             self.optimG.zero_grad()
-            loss_G = loss_l1 + loss_tea + loss_distill * 0.01 # when training RIFEm, the weight of loss_distill should be 0.005 or 0.002
+            # loss_G = loss_l1 + loss_tea + loss_distill * 0.01 # when training RIFEm, the weight of loss_distill should be 0.005 or 0.002
+            loss_G = loss_l1
             loss_G.backward()
             self.optimG.step()
-        else:
-            flow_teacher = flow[0]
+        # else:
+            # flow_teacher = flow[0]
         return merged[0], {
-            'merged_tea': merged_teacher,
+            # 'merged_tea': merged_teacher,
             'mask': mask,
             'mask_tea': mask,
             'flow': flow[0][:, :2],
-            'flow_tea': flow_teacher,
+            # 'flow_tea': flow_teacher,
             'loss_l1': loss_l1,
-            'loss_tea': loss_tea,
-            'loss_distill': loss_distill,
+            # 'loss_tea': loss_tea,
+            # 'loss_distill': loss_distill,
             }

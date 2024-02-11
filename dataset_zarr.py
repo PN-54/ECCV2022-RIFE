@@ -8,6 +8,10 @@ from torch.utils.data import DataLoader, Dataset
 import util
 import zarr
 
+# VIMEO90K_PATH = '/scratch/sjsch/vimeo90k_triplet.zarr.lmdb'
+TMPDIR = os.environ.get('SLURM_TMPDIR')
+VIMEO90K_PATH = f'{TMPDIR}/vimeo90k_triplet_uncomp.zarr.lmdb'
+
 cv2.setNumThreads(1)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class VimeoDataset(Dataset):
@@ -16,7 +20,7 @@ class VimeoDataset(Dataset):
         self.dataset_name = dataset_name        
         self.h = 256
         self.w = 448
-        self.root = zarr.open('/scratch/sjsch/vimeo90k_triplet.zarr.zip', mode='r')
+        self.root = zarr.open(zarr.storage.LMDBStore(VIMEO90K_PATH, readonly=True, lock=False))
         if self.dataset_name == 'train':
             self.ds = self.root.train.image
         elif self.dataset_name == 'test':

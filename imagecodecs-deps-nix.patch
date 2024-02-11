@@ -1,0 +1,30 @@
+--- a/setup.py	2023-12-28 14:06:07
++++ b/setup.py	2024-02-09 12:42:05
+@@ -245,25 +245,16 @@
+     del EXTENSIONS['mozjpeg']  # Win32 only
+     del EXTENSIONS['sperr']  # sperr not commonly available
+     del EXTENSIONS['zlibng']  # zlib-ng library not commonly available
++    del EXTENSIONS['jpeg2k']
++    del EXTENSIONS['jpegxr']
+ 
+     if 'arch' not in platform.platform():
+         del EXTENSIONS['jpegls']  # CharLS 2.1 library not commonly available
+-        del EXTENSIONS['jpegxl']  # jpeg-xl library not commonly available
+         del EXTENSIONS['brunsli']  # Brunsli library not commonly available
+         del EXTENSIONS['zfp']  # ZFP library not commonly available
+ 
+     if sys.platform == 'win32':
+         EXTENSIONS['bz2']['libraries'] = ['libbz2']
+-    else:
+-        EXTENSIONS['jpeg2k']['include_dirs'].extend(
+-            (
+-                '/usr/include/openjpeg-2.3',
+-                '/usr/include/openjpeg-2.4',
+-                '/usr/include/openjpeg-2.5',
+-            )
+-        )
+-        EXTENSIONS['jpegxr']['include_dirs'].append('/usr/include/jxrlib')
+-        EXTENSIONS['zopfli']['include_dirs'].append('/usr/include/zopfli')
+ 
+ 
+ def customize_build_cgohlke(EXTENSIONS, OPTIONS):

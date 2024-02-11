@@ -66,8 +66,8 @@ class IFNet_m(nn.Module):
         self.block0 = IFBlock(6+1, c=156)
         # self.block1 = IFBlock(13+4+1, c=46, small=True)
         # self.block2 = IFBlock(13+4+1, c=26)
-        self.block_tea = IFBlock(16+4+1, c=90)
-        self.contextnet = Contextnet()
+        # self.block_tea = IFBlock(16+4+1, c=90)
+        # self.contextnet = Contextnet()
         self.unet = Unet()
 
     def forward(self, x, scale=[4,2,1], timestep=0.5, returnflow=False):
@@ -93,16 +93,16 @@ class IFNet_m(nn.Module):
                 flow, mask = stu[i](torch.cat((img0, img1, timestep), 1), None, scale=scale[i], flow_is_none=None)
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
-            warped_img0 = warp(img0, flow[:, :2], self.contextnet.shape)
-            warped_img1 = warp(img1, flow[:, 2:4], self.contextnet.shape)
+            warped_img0 = warp(img0, flow[:, :2])
+            warped_img1 = warp(img1, flow[:, 2:4])
             merged_student = (warped_img0, warped_img1)
             merged.append(merged_student)
         # if gt.shape[1] == 3:
         if False:
             flow_d, mask_d = self.block_tea(torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_teacher = flow + flow_d
-            warped_img0_teacher = warp(img0, flow_teacher[:, :2], self.contextnet.shape)
-            warped_img1_teacher = warp(img1, flow_teacher[:, 2:4], self.contextnet.shape)
+            warped_img0_teacher = warp(img0, flow_teacher[:, :2])
+            warped_img1_teacher = warp(img1, flow_teacher[:, 2:4])
             mask_teacher = torch.sigmoid(mask + mask_d)
             merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
         else:
