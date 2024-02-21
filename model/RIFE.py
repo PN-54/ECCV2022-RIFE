@@ -14,7 +14,7 @@ from model.laplacian import *
 from model.refine import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
 class Model:
     def __init__(self, local_rank=-1, arbitrary=False):
         if arbitrary == True:
@@ -45,10 +45,10 @@ class Model:
                 for k, v in param.items()
                 if "module." in k
             }
-
+            
         if rank <= 0:
             self.flownet.load_state_dict(convert(torch.load('{}/flownet.pkl'.format(path), map_location=torch.device(device))))
-
+        
     def save_model(self, path, rank=0):
         if rank == 0:
             torch.save(self.flownet.state_dict(),'{}/flownet.pkl'.format(path))
@@ -63,7 +63,7 @@ class Model:
         else:
             flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
             return (merged[2] + merged2[2].flip(2).flip(3)) / 2
-
+    
     def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
