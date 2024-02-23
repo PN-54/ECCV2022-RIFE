@@ -32,47 +32,36 @@ class Conv2(nn.Module):
         x = self.conv2(x)
         return x
     
-c = 4
+c = 16
 class Contextnet(nn.Module):
     def __init__(self):
         super(Contextnet, self).__init__()
-        self.conv1 = Conv2(3, c, 1)
-        # self.conv2 = Conv2(c, 2*c)
-        # self.conv3 = Conv2(2*c, 4*c)
-        # self.conv4 = Conv2(4*c, 8*c)
-        self.shape = None
-
+        self.conv1 = Conv2(3, c)
+        self.conv2 = Conv2(c, 2*c)
+        self.conv3 = Conv2(2*c, 4*c)
+        self.conv4 = Conv2(4*c, 8*c)
+    
     def forward(self, x, flow):
-        # shape = self.shape.detach().clone()
         x = self.conv1(x)
-        # shape[3] = shape[3] / 2
-        # shape[2] = shape[2] / 2
-        # flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
-        f1 = warp(x, flow)
-        # x = self.conv2(x)
-        # shape[3] = shape[3] / 2
-        # shape[2] = shape[2] / 2
-        # flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
-        # f2 = warp(x, flow, shape)
-        # x = self.conv3(x)
-        # shape[3] = shape[3] / 2
-        # shape[2] = shape[2] / 2
-        # flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
-        # f3 = warp(x, flow, shape)
-        # x = self.conv4(x)
-        # shape[3] = shape[3] / 2
-        # shape[2] = shape[2] / 2
-        # flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
-        # f4 = warp(x, flow, shape)
-        # return [f1, f2, f3, f4]
-        return [f1]
+        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
+        f1 = warp(x, flow)        
+        x = self.conv2(x)
+        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
+        f2 = warp(x, flow)
+        x = self.conv3(x)
+        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
+        f3 = warp(x, flow)
+        x = self.conv4(x)
+        flow = F.interpolate(flow, scale_factor=0.5, mode="bilinear", align_corners=False, recompute_scale_factor=False) * 0.5
+        f4 = warp(x, flow)
+        return [f1, f2, f3, f4]
     
 class Unet(nn.Module):
     def __init__(self):
         super(Unet, self).__init__()
-        # self.down0 = Conv2(17, 2*c, 1)
+        # self.down0 = Conv2(17, 2*c)
         # self.down1 = Conv2(4*c, 4*c)
-        # self.down2 = Conv2(32*c, 32*c)
+        # self.down2 = Conv2(8*c, 8*c)
         # self.down3 = Conv2(16*c, 16*c)
         # self.up0 = deconv(32*c, 8*c)
         # self.up1 = deconv(16*c, 4*c)
@@ -88,8 +77,7 @@ class Unet(nn.Module):
         # x = self.up0(torch.cat((s3, c0[3], c1[3]), 1))
         # x = self.up1(torch.cat((x, s2), 1)) 
         # x = self.up2(torch.cat((x, s1), 1)) 
-        # x = self.up2(torch.cat((s1, c0[1], c1[1]), 1)) 
-        # x = self.up3(torch.cat((s0, c0[0], c1[0]), 1)) 
-        # x = self.conv(s0)
+        # x = self.up3(torch.cat((x, s0), 1)) 
+        # x = self.conv(x)
         x = self.conv(torch.cat((img0, img1, warped_img0, warped_img1, mask, flow), 1))
         return torch.sigmoid(x)

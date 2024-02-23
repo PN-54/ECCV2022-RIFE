@@ -73,7 +73,7 @@ class Model:
             self.train()
         else:
             self.eval()
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1]) # pass timestep if RIFEm
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         loss_l1 = (self.lap(merged[2], gt)).mean()
         loss_tea = (self.lap(merged_teacher, gt)).mean()
         if training:
