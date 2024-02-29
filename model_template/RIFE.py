@@ -15,9 +15,10 @@ from model_template.refine import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-class Model:
+class Model(nn.Module):
     def __init__(self, local_rank=-1, arbitrary=False, 
                  b1c=240, b2c=150, b3c=90, cc=16):
+        nn.Module.__init__(self)
         if arbitrary == True:
             self.flownet = IFNet_m(b1c=b1c, b2c=b2c, b3c=b3c, cc=cc)
         else:
@@ -36,8 +37,8 @@ class Model:
     def eval(self):
         self.flownet.eval()
 
-    def device(self):
-        self.flownet.to(device)
+    def device(self, dev=device):
+        self.flownet.to(dev)
 
     def load_model(self, path, device, rank=0):
         def convert(param):
@@ -53,6 +54,18 @@ class Model:
     def save_model(self, path, rank=0):
         if rank == 0:
             torch.save(self.flownet.state_dict(),'{}/flownet.pkl'.format(path))
+
+
+    def forward(self, img0, img1, scale=1, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
+        if isinstance(img0, torch.fx.Proxy):
+            # concrete_args doesn't work for the fx symbolic tracer, so we specify args 
+            # here when doing conversion
+            scale = 1
+            scale_list=[4, 2, 1]
+            TTA=False
+            timestep=0.5
+        self.inference(img0, img1, scale, scale_list, TTA, timestep)
+
 
     def inference(self, img0, img1, scale=1, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
         for i in range(3):
